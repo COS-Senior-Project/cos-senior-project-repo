@@ -1,0 +1,22 @@
+<component name="libraryTable">
+  <library name="apache-opennlp">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/hppc-0.7.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/jcommander-1.78.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/log4j-api-2.25.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/log4j-core-2.25.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/log4j-slf4j2-impl-2.25.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/morfologik-fsa-2.1.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/morfologik-fsa-builders-2.1.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/morfologik-stemming-2.1.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/morfologik-tools-2.1.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/opennlp-morfologik-addon-2.5.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/opennlp-tools-2.5.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/opennlp-tools-models-2.5.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/opennlp-uima-2.5.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../apache-opennlp-2.5.5/lib/slf4j-api-2.0.17.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
