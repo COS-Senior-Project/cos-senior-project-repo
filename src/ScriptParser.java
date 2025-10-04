@@ -7,12 +7,7 @@ import java.util.*;
 public class ScriptParser {
     //load a script file into a String
     public static String loadScript(String filePath) throws IOException{
-        try{
-            return new String(Files.readAllBytes(Paths.get(filePath)));
-        } catch (Exception e){
-            e.printStackTrace();
-            return "";
-        }
+        return new String(Files.readAllBytes(Paths.get(filePath)));
     }
 
     public List<Scene> splitScenes(String script){
