@@ -1,10 +1,16 @@
 public class Scene {
-    private String heading;
-    private String content;
+    private final String sceneNumber;
+    private final String heading;
+    private final String content;
 
-    public Scene(String heading, String content){
+    public Scene(String sceneNumber, String heading, String content){
+        this.sceneNumber = sceneNumber;
         this.heading = heading;
         this.content = content;
+    }
+
+    public String getSceneNumber(){
+        return sceneNumber;
     }
 
     public String getHeading(){
@@ -17,6 +23,6 @@ public class Scene {
 
     @Override
     public String toString(){
-        return heading + "\n" + content;
+        return "Scene: " + sceneNumber + "\nHeading: " + heading + "\nContent:\n" + content + "\n-----------------------------------\n";
     }
 }
