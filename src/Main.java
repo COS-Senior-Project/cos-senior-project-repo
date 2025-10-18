@@ -6,7 +6,7 @@ import java.util.List;
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
     public static void main(String[] args) throws IOException {
-        String script = ScriptParser.loadScript("Scripts/The Red Box.txt");
+        String script = ScriptParser.loadScript("Scripts/Wicked.txt");
 
         ScriptParser parser = new ScriptParser();
         List<Scene> scenes = parser.splitScenes(script);
