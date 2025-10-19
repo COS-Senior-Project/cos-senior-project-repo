@@ -1,5 +1,3 @@
-import opennlp.tools.sentdetect.SentenceDetectorME;
-import opennlp.tools.sentdetect.SentenceModel;
 import java.io.IOException;
 import java.util.List;
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
