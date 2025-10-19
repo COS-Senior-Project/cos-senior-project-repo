@@ -14,5 +14,10 @@ public class Main {
         for (Scene scene : scenes){
             System.out.println(scene);
         }
+
+        String[] tokens = TextUnits.tokenize("ELPHABA flies, then suddenly hovers.");
+        for (String token : tokens){
+            System.out.println(token);
+        }
     }
 }
