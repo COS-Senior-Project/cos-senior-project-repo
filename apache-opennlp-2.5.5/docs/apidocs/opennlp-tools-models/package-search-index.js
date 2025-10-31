@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"opennlp.tools.models"},{"l":"opennlp.tools.models.classgraph"},{"l":"opennlp.tools.models.simple"}];updateSearchResults();

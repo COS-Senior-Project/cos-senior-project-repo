@@ -4,18 +4,15 @@ import java.util.List;
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
     public static void main(String[] args) throws IOException {
-        String script = ScriptParser.loadScript("Scripts/Wicked.txt");
+        String script = ScriptParser.loadScript("Scripts/the-silence-of-the-lambs.txt");
 
         ScriptParser parser = new ScriptParser();
         List<Scene> scenes = parser.splitScenes(script);
+        CharacterExtractor.extractCharacterToCVS(scenes, "output/character_candidates.csv");
 
         for (Scene scene : scenes){
             System.out.println(scene);
         }
 
-        String[] tokens = TextUnits.tokenize("ELPHABA flies, then suddenly hovers.");
-        for (String token : tokens){
-            System.out.println(token);
-        }
     }
 }
