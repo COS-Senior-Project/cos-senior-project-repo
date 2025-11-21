@@ -1,0 +1,28 @@
+function levenshteinDistance(a, b):
+
+    // Step 1: Initialize a matrix of size (len(a)+1) x (len(b)+1)
+    create dp matrix where dp[i][j] = 0
+
+    // Step 2: Base cases
+    for i from 0 to len(a):
+        dp[i][0] = i      // converting "a" to empty string -> deletions
+    for j from 0 to len(b):
+        dp[0][j] = j      // converting empty string to "b" -> insertions
+
+    // Step 3: Fill matrix
+    for i from 1 to len(a):
+        for j from 1 to len(b):
+
+            if a[i-1] == b[j-1]:
+                cost = 0    // same letter → no change
+            else:
+                cost = 1    // different letter → substitution
+
+            dp[i][j] = min(
+                dp[i-1][j] + 1,        // deletion
+                dp[i][j-1] + 1,        // insertion
+                dp[i-1][j-1] + cost    // substitution
+            )
+
+    // Step 4: The bottom-right cell has the answer
+    return dp[len(a)][len(b)]

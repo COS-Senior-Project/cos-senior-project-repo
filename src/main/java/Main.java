@@ -8,7 +8,7 @@ public class Main {
 
         ScriptParser parser = new ScriptParser();
         List<Scene> scenes = parser.splitScenes(script);
-        CharacterExtractor.extractCharacterToCVS(scenes, "output/character_candidates.csv");
+        CharacterExtractor.extractCharacterToCSV(scenes, "output/character_candidates.csv");
 
         for (Scene scene : scenes){
             System.out.println(scene);

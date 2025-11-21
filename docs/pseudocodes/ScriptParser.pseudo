@@ -1,0 +1,114 @@
+//Precondition: script is a single string with normalized line endings
+function splitScenes(script):
+script = removePageNumbers(script)          // strip page headers/footers first
+lines = split script by newline (keep empty lines)
+
+    // RegEx helpers
+    // numberOnly: line that contains only a page/scene number, e.g. "98" or "98A"
+    // headingPattern: matches an optional inline number + location keyword (INT/EXT/...) +
+       optional description + optional time
+    // headingKeyword: matches a heading keyword at the start of a line (INT./EXT./etc.)
+
+    scenes = empty list
+
+    sceneRawCounter = 0       // counts actual scenes added
+    fallbackCounter = 1       // used when no explicit number is available
+    pendingSceneNumber = null // a number found on its own line above a heading
+
+    // current scene working variables
+    currentSceneNumber = null
+    currentHeading = null
+    currentLocation = null
+    currentTime = null
+    currentContent = empty string builder
+
+    for each index i from 0 to lines.length-1:
+        raw = lines[i]
+        line = trim(raw)
+
+        if line is empty:
+            // preserve a blank line inside a scene's content,
+            but skip extra blanks before any scene
+            if currentHeading is not null and currentContent is not empty:
+                append newline to currentContent
+            continue to next line
+
+        // 1) Handle a line that is a single number (could be page number or a scene number)
+        if line matches numberOnly:
+            // look ahead to next non-empty line to decide
+            j = i + 1
+            while j < lines.length and trim(lines[j]) is empty:
+                j = j + 1
+            nextIsHeading = false
+            if j < lines.length and headingKeyword matches trim(lines[j]):
+                nextIsHeading = true
+
+            if nextIsHeading:
+                pendingSceneNumber = captured number from this line
+                continue  // skip writing this line; the next heading will consume the number
+            else:
+                // it's likely a page number → drop it
+                continue
+
+        //2) Check if current line is a scene heading (possibly with inline number)
+        if line matches headingPattern with groups:
+            // If we were building a previous scene, finalize and save it
+            if currentHeading is not null:
+                sceneRawCounter = sceneRawCounter + 1
+                add Scene(sceneRawCounter, currentSceneNumber, currentHeading, trim(currentContent),
+                currentLocation, currentTime) to scenes
+                reset currentContent, currentHeading, currentLocation, currentTime, currentSceneNumber
+
+            // Determine sceneNumber: pendingNumber (from above) takes priority,
+            else the inline number group (if present)
+            if pendingSceneNumber is not null:
+                sceneNumber = pendingSceneNumber
+            else if headingPattern had inline-number-group:
+                sceneNumber = that group trimmed
+            else:
+                sceneNumber = ""   // will use fallback next
+
+            pendingSceneNumber = null
+
+            // If still empty, use fallbackCounter as a string
+            if sceneNumber is empty:
+                sceneNumber = string(fallbackCounter)
+
+            // Extract location keyword, description, and time from heading groups
+            locationKeyword = uppercase(trim(group for location keyword) or "")
+            locationDesc = trim(group for description) or ""
+            time = trim(group for time) or ""
+
+            // remove stray trailing numeric suffixes from description (e.g., "ROOM 98A *")
+            locationDesc = remove trailing " <digits>[A-Z]?" pattern from locationDesc and trim
+
+            // Build the displayed heading: e.g., "INT. BASEMENT - NIGHT"
+            displayedHeading = locationKeyword
+            if locationDesc not empty: displayedHeading += " " + locationDesc
+            if time not empty: displayedHeading += " - " + time
+
+            // Set current scene variables
+            currentSceneNumber = sceneNumber
+            currentHeading = displayedHeading
+            currentLocation = locationKeyword
+            currentTime = time
+
+            // If sceneNumber is purely numeric, sync fallbackCounter (so next implicit number increments)
+            if sceneNumber is all digits:
+                fallbackCounter = integer(sceneNumber) + 1
+
+            continue  // heading handled; move to next line
+
+        // 3) Not a heading and not a page number → treat as content for the current scene (if any)
+        if currentHeading is not null:
+            if currentContent not empty:
+                append newline to currentContent
+            append raw (preserve original formatting) to currentContent
+
+    // After the loop, finalize last scene if present
+    if currentHeading is not null:
+        sceneRawCounter = sceneRawCounter + 1
+        add Scene(sceneRawCounter, currentSceneNumber, currentHeading, trim(currentContent),
+        currentLocation, currentTime) to scenes
+
+    return scenes

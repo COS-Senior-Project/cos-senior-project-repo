@@ -1,0 +1,82 @@
+FUNCTION build_tfidf_matrix(docs):
+    // docs: list of documents (strings), e.g. each scene text
+    N = docs.length
+    tokenized_docs = []
+    term_doc_freq = empty map term -> document frequency (df)
+
+    // 1) tokenize and count term frequencies
+    for each doc in docs:
+        tokens = tokenize_and_normalize(doc)   // lowercase, remove punctuation, optional stopword removal
+        tokenized_docs.append(tokens)
+    end
+
+    // 2) build vocabulary and df
+    for each tokens in tokenized_docs:
+        seen = empty set
+        for t in tokens:
+            if t not in seen:
+                term_doc_freq[t] = term_doc_freq.get(t, 0) + 1
+                seen.add(t)
+    end
+
+    vocab = sorted keys of term_doc_freq
+    idf = map term -> idf_value
+    for t in vocab:
+        idf[t] = log((N + 1) / (term_doc_freq[t] + 1)) + 1
+
+    // 3) compute TF-IDF vectors (sparse)
+    tfidf_vectors = []
+    for tokens in tokenized_docs:
+        tf = empty map term -> count
+        for t in tokens: tf[t] = tf.get(t,0) + 1
+
+        apply TF transform, e.g. tf = 1 + log(tf) for counts > 0
+        for t in tf.keys():
+            tf[t] = 1 + log(tf[t])
+
+        // build sparse tf-idf vector
+        v = empty map term -> weight
+        for t,count in tf:
+            v[t] = count * idf[t]
+        end
+
+        // normalize vector to unit length (L2)
+        norm = sqrt(sum(w*w for w in v.values()))
+        if norm > 0:
+            for t in v.keys(): v[t] = v[t] / norm
+
+        tfidf_vectors.append(v)
+    end
+
+    return tfidf_vectors, vocab, idf
+END FUNCTION
+
+
+FUNCTION cosine_similarity_sparse(vA, vB):
+    // vA, vB are sparse maps term->value
+    // compute dot product over intersection of keys
+    dot = 0
+    // iterate over smaller map for efficiency
+    if size(vA) < size(vB):
+        small = vA; large = vB
+    else:
+        small = vB; large = vA
+
+    for term,value in small:
+        if term in large:
+            dot += value * large[term]
+    end
+    return dot
+END FUNCTION
+
+
+FUNCTION all_pair_similarities(tfidf_vectors):
+    M = number of vectors
+    sim_matrix = M x M zeros
+    for i in 0..M-1:
+        for j in i..M-1:
+            s = cosine_similarity_sparse(tfidf_vectors[i], tfidf_vectors[j])
+            sim_matrix[i][j] = s
+            sim_matrix[j][i] = s
+    return sim_matrix
+END FUNCTION

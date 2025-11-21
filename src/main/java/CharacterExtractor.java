@@ -7,16 +7,29 @@ import java.util.regex.*;
 public class CharacterExtractor {
 
     //Regex that captures multi-word uppercase names, group1 = name, group2 = parenthetical (optional)
-    private static final Pattern MULTI_WORD_NAME = Pattern.compile("\\b((?:[A-Z][A-Z0-9'’\\.\\-]*)(?:\\s+[A-Z][A-Z0-9'’\\.\\-]*)*)\\b(?:\\s*\\(([^)]*)\\))?");
+    private static final Pattern MULTI_WORD_NAME = Pattern.compile("\\b((?:[A-Z][A-Z0-9'’\\.\\-]*)" +
+            "(?:\\s+[A-Z][A-Z0-9'’\\.\\-]*)*)\\b(?:\\s*\\(([^)]*)\\))?");
 
-    //A small stoplist for common screenplay tokens that are not names
-    private static final Set<String> STOPLIST = new HashSet<>(Arrays.asList("INT","EXT","OMITTED","DAY","NIGHT","SAME","TIME","CONTINUOUS","PART","END","SCENE","PAGE"));
     private static final Pattern NAME_TOKEN = Pattern.compile("^[A-Z][A-Z0-9'’\\.\\-]*$");
-    private static final Set<String> SOUND_WORDS = new HashSet<>(Arrays.asList("BOOM", "BANG", "CRASH", "RUMBLE", "SOUND", "NOISE", "FX", "CUT", "FADE", "CONTINUED", "SFX", "CROWD"));
+
     //optional debug flag to print decisions
+    private static final Set<String> BLACK_LIST = new HashSet<>(Arrays.asList(
+            "A","AN","AND","OR","BUT","FOR","TO","IN","ON","AT","IS","ARE","WAS","WERE",
+            "BEEN","HAVE","HAS","HAD","DO","DOES","DID","WILL","WOULD","SHALL","SHOULD","MAY",
+            "MIGHT","CAN","COULD","NOT","NO","AS","THAN","IF","WHEN","WHILE","HOW","WHAT", "WHICH", "SHOT", "MOVING",
+            "BOOM","BANG","CRASH","RUMBLE","SOUND","NOISE","FX","CUT","CUTTING","CUTS","CUTS TO","CUT TO",
+            "CLOSE","CLOSES","CLOSE ON","PAN","PANNING","ZOOM","DOLLY","ANGLE","HER","HIS","THEM","THEMSELVES",
+            "POV","BETWEEN","CUTTING","FX","SFX","CROWD","INT","EXT","OMITTED","DAY","NIGHT","SAME","TIME",
+            "CONTINUOUS","PART","END","SCENE","PAGE","CLOSE","WIDE","MIDDLE","POV","OMITTED","CONTINUED"
+            ));
+
+    private static final Set <String> STAGE_VERBS = new HashSet<>(Arrays.asList(
+            "CUT","PAN","ZOOM","DOLLY","TRACK","FADE","SMASH","MATCH","WIPE"
+    ));
     private static final boolean DEBUG = false;
 
-    public static void extractCharacterToCVS(List<Scene> scenes, String outputPath) throws IOException{
+
+    public static void extractCharacterToCSV(List<Scene> scenes, String outputPath) throws IOException{
         //using try-with-resources for safe closing
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath, false))){
             //header
@@ -53,16 +66,15 @@ public class CharacterExtractor {
                                     String rawName = lineMatcher.group(1);
                                     String name = normalizeName(rawName);
                                     name = name.replaceAll("\\s+\\d+[A-Z]?\\.?\\s*$", "").trim();
-                                    if (name.length() >= 2){
-                                        String base = name.replaceAll("[^A-Z]", "");
-                                        if (!base.isEmpty() && !STOPLIST.contains(base)){
-                                            if (written.add(name)){
+                                    if (name.length() >= 2) {
+                                        if (isStopPhrase(name)) {
+                                            if (DEBUG) System.out.printf("SPEAKER_ABOVE_DIALOGUE skip stopphrase: %s -> %s%n", sceneKey, name);
+                                        } else {
+                                            if (written.add(name)) {
                                                 String snippet = safeSnippet(line + " / " + next);
                                                 writeRow(writer, sceneKey, name, "SPEAKER_ABOVE_DIALOGUE", snippet);
                                                 if (DEBUG) System.out.printf("SPEAKER_ABOVE_DIALOGUE keep: %s -> %s%n", sceneKey, name);
                                             }
-                                        } else if (DEBUG){
-                                            System.out.printf("SPEAKER_ABOVE_DIALOGUE skip stoplist: %s%n", name);
                                         }
                                     }
                                 }
@@ -70,60 +82,19 @@ public class CharacterExtractor {
                         }
                     }
                 }
-
-                /*
-                Matcher m = MULTI_WORD_NAME.matcher(content);
-                while (m.find()){
-                    String rawName = m.group(1); //the captured name
-                    String paren = m.group(2); //parentheses content if present (e.g., O.S.)
-
-                    //Normalize name:collapse multiple spaces, trim, replace curly apostrophes
-                    String name = normalizeName(rawName);
-
-                    //Remove trailing page-like numbers (" - 89", "89", "89A") if copied in heading text
-                    name = name.replaceAll("\\s+\\d+[A-Z]?\\.?\\s*$", "").trim();
-
-                    //skips very short or obviously non-name tokens
-                    if (name.length() < 2) continue;
-
-                    //filters stoplist (compares base token uppercase)
-                    String base = name.replaceAll("[^A-Z]", "");
-                    if (base.isEmpty() || STOPLIST.contains(base)){
-                        if (DEBUG) System.out.println("SKIP stoplist: " + name);
-                        continue;
-                    }
-
-                    //composes a rule label
-                    String rule = (paren != null && ! paren.trim().isEmpty()) ? "UPPER_WITH_PAREN" : "UPPERCASE_NAME";
-
-                    //Avoid duplicates in the same scene
-                    if (written.add(name)){
-                        String snippet = safeSnippet(m.group(0));
-                        writeRow(writer, sceneKey, name, rule, snippet);
-                        if (DEBUG) System.out.printf("KEEP: scene = %s; name = %s; rule = %s; snippet = %s%n", sceneKey, name, rule, snippet);
-                    } else {
-                        if (DEBUG) System.out.printf("DUP: scene = %s; name = %s; (skipped)%n", sceneKey, name);
-                    }
-                }
-                */
-
-
             } //scenes loop
         } //writer auto-closed
         if (DEBUG) System.out.println("Character extraction finished.");
     }
 
     //Helper methods
-
-    //Normalize: collapse spaces, convert curly apostrophes to straight, trim
-    private static String normalizeName(String raw){
+    public static String normalizeName(String raw){
         if (raw == null) return "";
         String s = raw.replace("’", "'").replaceAll("\\s+", " ").trim();
         //removes stray trailing punctuation except middle-of-name punctuation
         s = s.replaceAll("^[^A-Z0-9]+", "").replaceAll("[^A-Z0-9]+$", "");
         return s;
     }
-
     //returns true if the text is mostly uppercase tokens
     private static boolean isMostlyUppercase(String text){
         String[] toks = TextUnits.tokenize(text);
@@ -136,6 +107,25 @@ public class CharacterExtractor {
             if (letters.equals(letters.toUpperCase(Locale.ROOT))) upper++;
         }
         return total > 0 && ((double) upper / total) >= 0.80; //80% tokens uppercase -> treat it as an uppercase line
+    }
+
+    private static boolean isStopPhrase(String candidateName){
+        if (candidateName == null || candidateName.isEmpty()) return true;
+        String[] parts = candidateName.split("\\s+");
+        boolean allStop = true;
+        for (String p : parts){
+            String up = p.replaceAll("[^A-Z]", "");
+            if (up.isEmpty()) continue;
+            if (!BLACK_LIST.contains(up) && !STAGE_VERBS.contains(up)){
+                allStop = false;
+            }
+        }
+        if (allStop) return true;
+
+        String upName = candidateName.toUpperCase(Locale.ROOT);
+        if (upName.contains("POV") || upName.contains("BETWEEN") || upName.contains("CUT ") || upName.contains("CLOSE ")) return true;
+
+        return false;
     }
 
     private static boolean isCharacterCue(String line){
@@ -167,11 +157,15 @@ public class CharacterExtractor {
         if (nameTokens == 0) return false;
 
         //if there is at least one name-like token
-        if (nameTokens >= Math.ceil(toks.length * 0.8) && tokenCount <= 5){
+        if (nameTokens >= Math.ceil(tokenCount * 0.8) && tokenCount <= 5){
             //rejects if punctuation or obvious sound/transition keywords appear
             if (trimmed.matches(".*[!\\?\\,\\.;:\\(\\)\\[\\]].*")) return false;
-            String up = trimmed.replaceAll("[^A-Z\\s]", "");
-            for (String s : SOUND_WORDS) if (up.contains(s)) return false;
+            for (String tok : TextUnits.tokenize(trimmed)){
+                String up = tok.replaceAll("[^A-Z]", "");
+                if (up.isEmpty()) continue;
+                if (BLACK_LIST.contains(up)) return false;
+                if (STAGE_VERBS.contains(up)) return false;
+            }
             return true;
         }
         return false;

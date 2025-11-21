@@ -1,0 +1,61 @@
+function isCharacterCue(line) -> boolean
+    // 1. Trim input and quick length checks
+    trimmed = trim(line)
+    if trimmed is empty or length(trimmed) < 2 then
+        return false
+
+    // 2. Require the line to be mostly uppercase tokens
+    // (helper isMostlyUppercase returns true if >=80% of meaningful tokens are uppercase)
+    if not isMostlyUppercase(trimmed) then
+        return false
+
+    // 3. Tokenize the line into tokens (words/punctuation)
+    toks = TextUnits.tokenize(trimmed)
+
+    nameTokens = 0
+    tokenCount = 0
+
+    // 4. Count tokens that contain letters and count name-like tokens
+    for each t in toks do
+        // lettersOnly = t with all non-A-Z characters removed
+        lettersOnly = removeNonLettersAtoZ(t)
+        if length(lettersOnly) == 0 then
+            continue
+
+        tokenCount = tokenCount + 1
+
+        // clean = t with only A-Z, 0-9, apostrophes, dots, hyphens allowed
+        clean = keepChars(t, allowedPattern = [A-Z, 0-9, apostrophe, dot, hyphen])
+
+        // NAME_TOKEN matches tokens that look like a name token (single uppercase token with allowed chars)
+        if NAME_TOKEN matches clean then
+            nameTokens = nameTokens + 1
+        end if
+    end for
+
+    // 5. If there are no tokens with letters, or no name-like tokens, it's not a cue
+    if tokenCount == 0 then return false
+    if nameTokens == 0 then return false
+
+    // 6. Heuristic: most tokens must be name-like (>= 80%) and there can't be too many tokens (<=5)
+    if nameTokens >= ceil(tokenCount * 0.8) and tokenCount <= 5 then
+        // reject lines containing punctuation that indicates stage directions or transitions
+        if trimmed contains any of [! ? , . ; : ( ) [ ] ] then
+            return false
+        end if
+
+        // 7. Reject if any meaningful uppercase token is in the blacklist or stage-verb lists
+        for each tok in TextUnits.tokenize(trimmed) do
+            up = removeNonLettersAtoZ(tok)   // keep only A-Z chars
+            if up is empty then continue
+            if BLACK_LIST contains up then return false
+            if STAGE_VERBS contains up then return false
+        end for
+
+        // Passed all tests — it's a character cue
+        return true
+    end if
+
+    // Default: not a character cue
+    return false
+end function

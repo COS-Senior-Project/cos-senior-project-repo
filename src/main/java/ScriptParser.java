@@ -24,7 +24,9 @@ public class ScriptParser {
 
         Pattern numberOnly = Pattern.compile("^\\s*(\\d+)\\s*\\.?\\s*\\*?\\s*$"); //"98", "98.", "98 *"
         Pattern repeatedNumberLine = Pattern.compile("^\\s*(\\d+)\\s+\\1\\s*$"); //"98  98"
-        Pattern headingKeyword = Pattern.compile("^(INT\\.?|EXT\\.?|INT/EXT\\.?|EXT/INT\\.?|I/E\\.?|EST\\.?|OMITTED)\\b", Pattern.CASE_INSENSITIVE);
+        Pattern headingKeyword = Pattern.compile("^(INT\\.?|EXT\\.?|INT/EXT\\.?|EXT/INT\\.?|I/E\\.?|EST\\.?|OMITTED)\\b",
+                Pattern.CASE_INSENSITIVE);
+
 
         for (int i = 0; i< lines.length; i++){
             String line = lines[i];
@@ -107,7 +109,7 @@ public class ScriptParser {
         String currentTime = null;
         StringBuilder currentContent = new StringBuilder();
 
-        boolean debug = true;
+        boolean debug = false;
 
         for (int i = 0; i < lines.length; i++) {
             String raw = lines[i];
