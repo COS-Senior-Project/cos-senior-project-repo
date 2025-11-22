@@ -61,7 +61,7 @@ public class ScriptParser {
             //case B: number-only line -> *maybe* page number: keeps it if next meaningful line is a heading,
             //otherwise drops it (treats it as a page number).
             Matcher mnum = numberOnly.matcher(trimmed);
-            if (mnum.find()){
+            if (mnum.find()) {
                 //looks ahead to next non-empty, non-dash line
                 int j = i + 1;
                 while(j < lines.length && lines[j].trim().isEmpty()) j++;
@@ -70,7 +70,7 @@ public class ScriptParser {
                     nextIsHeading = headingKeyword.matcher(lines[j].trim()).find();
                 }
 
-                if (!nextIsHeading){
+                if (!nextIsHeading) {
                     //skip this line (likely page number)
                     continue;
                 }
@@ -185,7 +185,7 @@ public class ScriptParser {
                 //Build the displayed heading (keep keyword)
                 String displayedHeading = locationKeyword + (locationDesc.isEmpty() ? "" : " " + locationDesc) + (time.isEmpty() ? "" : " - " + time);
 
-                //Set current scene varibles
+                //Set current scene variables
                 currentSceneNumber = sceneNumber;
                 currentHeading = displayedHeading;
                 currentLocation = locationKeyword;
