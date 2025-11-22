@@ -10,6 +10,8 @@ public class CharacterExtractor {
     private static final Pattern MULTI_WORD_NAME = Pattern.compile("\\b((?:[A-Z][A-Z0-9'’\\.\\-]*)" +
             "(?:\\s+[A-Z][A-Z0-9'’\\.\\-]*)*)\\b(?:\\s*\\(([^)]*)\\))?");
 
+    //pattern looks for a string starting with one upper-cased letter
+    // followed by more upper-cased letters, digits, apostrophes, periods, or dashes
     private static final Pattern NAME_TOKEN = Pattern.compile("^[A-Z][A-Z0-9'’\\.\\-]*$");
 
     //optional debug flag to print decisions
@@ -28,12 +30,11 @@ public class CharacterExtractor {
     ));
     private static final boolean DEBUG = false;
 
-
     public static void extractCharacterToCSV(List<Scene> scenes, String outputPath) throws IOException{
         //using try-with-resources for safe closing
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath, false))){
             //header
-            writer.write("sceneNumber, candidateName, rule, contextSnippet\n");
+            writer.write("Scene Order Number,Actual Scene Number,CandidateName,Rule,ContextSnippet,Confidence Score\n");
 
             for (Scene scene : scenes){
                 String sceneKey = scene.getSceneNumber();
@@ -44,8 +45,10 @@ public class CharacterExtractor {
                 Set<String> written = new LinkedHashSet<>();
 
                 //speaker line above dialogue rule
-                //split into lines and look for an uppercase cue line followed by a non-uppercase line
+                //splits into lines and looks for an uppercase cue line followed by a non-uppercase line
+                //keeps the content as it is because of the -1
                 String[] lines = content.split("\n", -1);
+                //loops through the lines of each the scene's content
                 for (int i = 0; i < lines.length; i++){
                     String line = lines[i].trim();
                     if (line.isEmpty()) continue;
@@ -68,7 +71,7 @@ public class CharacterExtractor {
                                     name = name.replaceAll("\\s+\\d+[A-Z]?\\.?\\s*$", "").trim();
                                     if (name.length() >= 2) {
                                         if (isStopPhrase(name)) {
-                                            if (DEBUG) System.out.printf("SPEAKER_ABOVE_DIALOGUE skip stopphrase: %s -> %s%n", sceneKey, name);
+                                            if (DEBUG) System.out.printf("SPEAKER_ABOVE_DIALOGUE skip stop phrase: %s -> %s%n", sceneKey, name);
                                         } else {
                                             if (written.add(name)) {
                                                 String snippet = safeSnippet(line + " / " + next);
@@ -102,9 +105,10 @@ public class CharacterExtractor {
         int upper = 0, total = 0;
         for (String t : toks){
             String letters = t.replaceAll("[^A-Z]", "");
-            if (letters.length() == 0) continue;
+            if (!letters.isEmpty()) {
+                upper++;
+            }
             total++;
-            if (letters.equals(letters.toUpperCase(Locale.ROOT))) upper++;
         }
         return total > 0 && ((double) upper / total) >= 0.80; //80% tokens uppercase -> treat it as an uppercase line
     }
@@ -129,22 +133,21 @@ public class CharacterExtractor {
     }
 
     private static boolean isCharacterCue(String line){
-        String trimmed = line.trim();
+        //Ignores very short lines
+        if (line.length() < 2) return false;
 
-        //Ignores very short or empty lines
-        if (trimmed.isEmpty() || trimmed.length() < 2) return false;
-
-        if(!isMostlyUppercase(trimmed)) return false;
-        String[] toks = TextUnits.tokenize(trimmed);
+        //checks if the line has mostly words that contain at least one uppercase character
+        if(!isMostlyUppercase(line)) return false;
+        String[] toks = TextUnits.tokenize(line);
 
         int nameTokens = 0;
         int tokenCount = 0;
 
         for (String t : toks){
-            //skips pure punctuation tokens
+            //skips any tokens that have no upper-cased letters
             String lettersOnly = t.replaceAll("[^A-Z]", "");
-            if (lettersOnly.length() == 0) continue;
             tokenCount++;
+            if (lettersOnly.isEmpty()) continue;
 
             //normalizes token for matching (strip punctuation that tokenizer may still keep)
             String clean = t.replaceAll("[^A-Z0-9'’\\.\\-]", "");
@@ -159,8 +162,8 @@ public class CharacterExtractor {
         //if there is at least one name-like token
         if (nameTokens >= Math.ceil(tokenCount * 0.8) && tokenCount <= 5){
             //rejects if punctuation or obvious sound/transition keywords appear
-            if (trimmed.matches(".*[!\\?\\,\\.;:\\(\\)\\[\\]].*")) return false;
-            for (String tok : TextUnits.tokenize(trimmed)){
+            if (line.matches(".*[!\\?\\,\\.;:\\(\\)\\[\\]].*")) return false;
+            for (String tok : TextUnits.tokenize(line)){
                 String up = tok.replaceAll("[^A-Z]", "");
                 if (up.isEmpty()) continue;
                 if (BLACK_LIST.contains(up)) return false;

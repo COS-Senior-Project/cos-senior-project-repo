@@ -1,9 +1,9 @@
 import java.util.Locale;
 
 public class Character extends ExtractableItem {
-    public Character (String nameItem, int sceneNumberInt, String sceneNumber,
+    public Character (int sceneNumberInt, String sceneNumber, String nameItem, String rule,
                       String contextSnippet, double confidenceScore) {
-        super(nameItem, sceneNumberInt, sceneNumber, contextSnippet, confidenceScore);
+        super(sceneNumberInt, sceneNumber, nameItem, rule, contextSnippet, confidenceScore);
     }
 
     @Override
@@ -20,6 +20,11 @@ public class Character extends ExtractableItem {
         //multi-word names (e.g. ANNA SMITH) can be stronger matches
         if (nameItem != null && nameItem.length() >= 2) {
             confidenceScore += 0.1;
+        }
+
+        if (nameItem != null) {
+            double boost = NameDatabase.confidenceBoostMatchFile(nameItem);
+            this.confidenceScore = Math.min(1.0, this.confidenceScore + boost);
         }
 
     }

@@ -1,28 +1,23 @@
 import java.util.Map;
 
 public abstract class ExtractableItem {
-    protected String nameItem;
     protected int sceneNumberInt;
     protected String sceneNumber;
+    protected String nameItem;
+    protected String rule;
     protected String contextSnippet;
     protected double confidenceScore;
 
-    public ExtractableItem(String nameItem, int sceneNumberInt, String sceneNumber, String contextSnippet, double confidenceScore){
-        this.nameItem = nameItem;
+    public ExtractableItem(int sceneNumberInt, String sceneNumber, String nameItem, String rule, String contextSnippet, double confidenceScore){
         this.sceneNumberInt = sceneNumberInt;
         this.sceneNumber = sceneNumber;
+        this.nameItem = nameItem;
+        this.rule = rule;
         this.contextSnippet = contextSnippet;
         this.confidenceScore = confidenceScore;
     }
 
     //getters and setters
-    public String getNameItem(){
-        return nameItem;
-    }
-
-    public void setNameItem(String nameItem){
-        this.nameItem = nameItem;
-    }
 
     public int getSceneNumberInt() {
         return sceneNumberInt;
@@ -34,6 +29,20 @@ public abstract class ExtractableItem {
 
     public String getSceneNumber() {
         return sceneNumber;
+    }
+
+    public String getNameItem(){
+        return nameItem;
+    }
+
+    public void setNameItem(String nameItem){
+        this.nameItem = nameItem;
+    }
+
+    public void setRule(String rule) { this.rule = rule; }
+
+    public String getRule() {
+        return rule;
     }
 
     public void setSceneNumber(String sceneNumber) {
@@ -65,15 +74,6 @@ public abstract class ExtractableItem {
     public  abstract  void boostConfidence();
 
     //non-abstract methods
-
-    //merges two mentions when they refer to the same item
-    public void mergeWith(ExtractableItem other){
-        //combines confidence
-        this.confidenceScore = Math.max(this.confidenceScore, other.confidenceScore);
-
-        //merges contexts
-        this.contextSnippet += " | " + other.contextSnippet;
-    }
 
     public String bootstrappingObjects(String classLabel) {
         String[] tokens = TextUnits.tokenize(this.contextSnippet);

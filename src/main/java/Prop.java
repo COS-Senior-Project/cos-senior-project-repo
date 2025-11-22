@@ -1,7 +1,7 @@
 public class Prop extends PhysicalObject {
-    public Prop (String nameItem, int sceneNumberInt, String sceneNumber,
-                 String contextSnippet, double confidenceScore){
-        super(nameItem, sceneNumberInt, sceneNumber, contextSnippet, confidenceScore);
+    public Prop (int sceneNumberInt, String sceneNumber, String nameItem, String rule,
+                      String contextSnippet, double confidenceScore) {
+        super(sceneNumberInt, sceneNumber, nameItem, rule, contextSnippet, confidenceScore);
     }
 
     @Override
